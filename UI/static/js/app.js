@@ -15,6 +15,7 @@ const myDropzone = new Dropzone("#dropzone", {
   init: function () {
     const uploadImageElement = document.getElementById("upload-image");
     const uploadTextImageElement = document.getElementById("upload-image-text");
+    const errorElement = document.getElementById("error"); // Get the error element
 
     this.on("addedfile", function (file) {
       // Hide the upload image when a file is added
@@ -27,6 +28,7 @@ const myDropzone = new Dropzone("#dropzone", {
         // Show the upload image when all files are removed
         uploadImageElement.style.display = "block";
         uploadTextImageElement.style.display = "block";
+        errorElement.style.display = "none";
       }
     });
 
