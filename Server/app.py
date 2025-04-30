@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, jsonify
 import os
 from pathlib import Path
+import shutil
 
 # Get absolute paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,24 +23,28 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/file-upload', methods=['POST'])
-def upload_file():
-    if request.method == 'POST':
-        # Check if the post request has the file part
-        if 'file' not in request.files:
-            return redirect(request.url)
+@app.route('/upload-handler', methods=['POST'])
+def upload_handler():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file part in the request'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'}), 400
+    if file:
+        # Clear the upload folder before saving the new file
+        try:
+            shutil.rmtree(app.config['UPLOAD_FOLDER'])
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            print(
+                f"Upload folder '{app.config['UPLOAD_FOLDER']}' cleared before new upload.")
+        except Exception as e:
+            print(f"Error clearing upload folder: {e}")
+            return jsonify({'success': False, 'error': 'Failed to clear folder'}), 500
 
-        file = request.files['file']
-
-        # If user does not select file, browser also
-        # submits an empty part without filename
-        if file.filename == '':
-            return redirect(request.url)
-
-        if file:
-            filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(filename)
-            return 'File uploaded successfully'
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(filename)
+        return jsonify({'success': True, 'message': 'File uploaded and folder cleared'})
+    return jsonify({'success': False, 'error': 'Invalid request method'}), 400
 
 
 if __name__ == "__main__":

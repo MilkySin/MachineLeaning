@@ -2,7 +2,7 @@
 Dropzone.autoDiscover = false;
 
 const myDropzone = new Dropzone("#dropzone", {
-  url: "/file-upload",
+  url: "/upload-handler",
   paramName: "file",
   maxFilesize: 10, // MB
   acceptedFiles: "image/png, image/jpeg",
@@ -29,6 +29,7 @@ const myDropzone = new Dropzone("#dropzone", {
         uploadTextImageElement.style.display = "block";
       }
     });
+
     this.on("success", function (file, response) {
       console.log("File uploaded successfully");
     });
@@ -38,13 +39,19 @@ const myDropzone = new Dropzone("#dropzone", {
     });
   },
 });
+
 // Add event listener to the Classify button
 document.getElementById("submitBtn").addEventListener("click", function () {
-  // Check if any files are in the queue
-  if (myDropzone.getQueuedFiles().length > 0) {
-    // Process the queue (upload the file)
-    myDropzone.processQueue();
-  } else {
-    alert("Please drop an image to classify.");
+  const errorElement = document.getElementById("error"); // Get the error element
+  errorElement.style.display = "none";
+
+  if (myDropzone.getAcceptedFiles().length === 0) {
+    errorElement.textContent = "Please upload an image before classifying.";
+    errorElement.style.display = "block";
+    return; //  STOP here.  Do NOT proceed to upload if no file.
   }
+  myDropzone.processQueue();
+
+  errorElement.textContent = "Classifying image...";
+  errorElement.style.display = "block";
 });
