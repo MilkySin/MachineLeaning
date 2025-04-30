@@ -46,7 +46,6 @@
     margin: 0 auto;    /* Center the image horizontally */
 }
   
-
 .error {
   font-family: MerriweatherRegular;
   font-size: 30px;
@@ -54,6 +53,7 @@
   color: blue;
   text-align: center;
 }
+
 
 #classTable {
   font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
