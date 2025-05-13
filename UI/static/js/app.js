@@ -44,54 +44,47 @@ const myDropzone = new Dropzone("#dropzone", {
 
 // Add event listener to the Classify button
 document.getElementById("submitBtn").addEventListener("click", function () {
-  const errorElement = document.getElementById("error");
-  errorElement.style.display = "none";
+        const errorElement = document.getElementById("error");
+        errorElement.style.display = "none";
 
-  if (myDropzone.getAcceptedFiles().length === 0) {
-    errorElement.textContent = "Please upload an image before classifying.";
-    errorElement.style.display = "block";
-    return;
-  }
-
-  const file = myDropzone.getAcceptedFiles()[0];
-  const formData = new FormData();
-  formData.append("file", file);
-
-  errorElement.textContent = "Classifying image...";
-  errorElement.style.display = "block";
-
-  // Step 1: Upload the file
-  fetch("/upload-handler", {
-    method: "POST",
-    body: formData,
-  })
-    .then((uploadRes) => uploadRes.json())
-    .then((uploadData) => {
-      if (!uploadData.success) {
-        throw new Error(uploadData.error || "Upload failed.");
-      }
-
-      // Step 2: Send file again for classification
-      return fetch("/classify_image", {
-        method: "POST",
-        body: formData,
-      });
-    })
-    .then((classifyRes) => classifyRes.json())
-    .then((result) => {
-      if (result.predictions) {
-        errorElement.textContent = "Classification successful!";
-        console.log("Predictions:", result.predictions);
-        document.getElementById("class-vgg").textContent = result.predictions.vgg || "N/A";
-        document.getElementById("class-mobile-net").textContent = result.predictions.mobile_net || "N/A";
-        document.getElementById("class-CNN").textContent = result.predictions.cnn || "N/A";
-        // Optionally display results on the UI
-      } else {
-        throw new Error(result.error || "Classification failed.");
-      }
-    })
-    .catch((err) => {
-      errorElement.textContent = err.message;
-      errorElement.style.display = "block";
+        if (myDropzone.getAcceptedFiles().length === 0) {
+            errorElement.textContent = "Please upload an image before classifying.";
+            errorElement.style.display = "block";
+            return;
+        }
+        errorElement.textContent = "Classifying image...";
+        errorElement.style.display = "block";
+        myDropzone.processQueue(); // Start the upload and classification
     });
-});
+
+    myDropzone.on("success", function (file, response) {
+        const resultsDiv = document.getElementById("results");
+        const vggPredictionSpan = document.getElementById("vgg-prediction");
+        const mobileNetPredictionSpan = document.getElementById("mobile-net-prediction");
+        const cnnPredictionSpan = document.getElementById("cnn-prediction");
+        const errorElement = document.getElementById("error");
+
+        if (response.error) {
+            errorElement.textContent = response.error;
+            errorElement.style.display = "block";
+            resultsDiv.style.display = "none";
+            return;
+        }
+
+        vggPredictionSpan.textContent = response.predictions.vgg;
+        mobileNetPredictionSpan.textContent = response.predictions.mobile_net;
+        cnnPredictionSpan.textContent = response.predictions.cnn;
+        resultsDiv.style.display = "block";
+        errorElement.style.display = "none";
+    });
+
+    myDropzone.on("error", function (file, errorMessage) {
+        const errorElement = document.getElementById("error");
+        errorElement.textContent = "Error during classification: " + errorMessage;
+        errorElement.style.display = "block";
+        document.getElementById("results").style.display = "none";
+    });
+
+    myDropzone.on("complete", function() {
+        myDropzone.removeAllFiles();
+    });

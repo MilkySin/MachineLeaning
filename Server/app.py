@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 import json
 import time
-from tensorflow.keras.preprocessing import image
+import util
 
 # Get absolute paths
 from pathlib import Path
@@ -44,9 +44,6 @@ model_cnn = loader('CNN', 'models/task1_cnn_model.h5')
 app.config['UPLOAD_FOLDER'] = PIC_DIR
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -78,14 +75,6 @@ def upload_handler():
         return jsonify({'success': True, 'message': 'File uploaded and folder cleared'})
     return jsonify({'success': False, 'error': 'Invalid request method'}), 400
 
-#normalize the image
-def preprocess_image(img_path):
-    img = image.load_img(img_path, target_size=(224, 224))  
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)  
-    img_array = img_array / 255.0  
-    return img_array
-
 
 @app.route('/classify_image', methods=['POST'])
 def classify_image():
@@ -97,7 +86,7 @@ def classify_image():
 
         try:
             # Preprocess image for prediction
-            img_array = preprocess_image(file_path)
+            img_array = util.preprocess_image(file_path)
 
             # Predict with all models
             vgg_prediction = model_vgg.predict(img_array)
