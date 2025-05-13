@@ -22,18 +22,20 @@ UI_DIR = os.path.join(BASE_DIR.parent, 'UI')
 UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
 PIC_DIR = os.path.join(UPLOAD_DIR, 'pic')
 
-
 app = Flask(__name__,
             template_folder=os.path.join(UI_DIR, 'templates'),
             static_folder=os.path.join(UI_DIR, 'static'))
 
 # Load models with progress indication
+
+
 def loader(model_name, model_path):
     print(f"Loading {model_name} model...")
     start_time = time.time()
     model = tf.keras.models.load_model(model_path)
     print(f"{model_name} model loaded in {time.time() - start_time:.2f} seconds.")
     return model
+
 
 # Load models
 model_vgg = loader('VGG', 'models/task1_vgg_model.h5')
@@ -43,6 +45,10 @@ model_cnn = loader('CNN', 'models/task1_cnn_model.h5')
 # Configure upload folder
 app.config['UPLOAD_FOLDER'] = PIC_DIR
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+class_labels = ['bacterial_leaf_blight', 'bacterial_leaf_streak', 'bacterial_panicle_blight',
+                'blast', 'brown_spot', 'dead_heart', 'downy_mildew', 'hispa', 'normal', 'tungro']
+
 
 @app.route('/')
 def index():
@@ -93,15 +99,31 @@ def classify_image():
             mobile_net_prediction = model_mobile_net.predict(img_array)
             cnn_prediction = model_cnn.predict(img_array)
 
-            # Get the predicted class index
-            vgg_class = int(np.argmax(vgg_prediction, axis=1)[0])
-            mobile_net_class = int(np.argmax(mobile_net_prediction, axis=1)[0])
-            cnn_class = int(np.argmax(cnn_prediction, axis=1)[0])
+            vgg_index = int(np.argmax(vgg_prediction, axis=1)[0])
+            vgg_confidence = float(np.max(vgg_prediction, axis=1)[0])
+            vgg_label = class_labels[vgg_index]
+
+            mobile_index = int(np.argmax(mobile_net_prediction, axis=1)[0])
+            mobile_confidence = float(np.max(mobile_net_prediction, axis=1)[0])
+            mobile_label = class_labels[mobile_index]
+
+            cnn_index = int(np.argmax(cnn_prediction, axis=1)[0])
+            cnn_confidence = float(np.max(cnn_prediction, axis=1)[0])
+            cnn_label = class_labels[cnn_index]
 
             predictions = {
-                'vgg': vgg_class,
-                'mobile_net': mobile_net_class,
-                'cnn': cnn_class
+                'vgg': {
+                    'label': vgg_label,
+                    'confidence': f"{vgg_confidence * 100:.2f}%"
+                },
+                'mobile_net': {
+                    'label': mobile_label,
+                    'confidence': f"{mobile_confidence * 100:.2f}%"
+                },
+                'cnn': {
+                    'label': cnn_label,
+                    'confidence': f"{cnn_confidence * 100:.2f}%"
+                }
             }
 
             # Save to predictions.json
@@ -120,8 +142,7 @@ def classify_image():
             return jsonify({'predictions': predictions, 'message': 'Image classified and predictions saved successfully'})
         except Exception as e:
             print(f"Error during classification: {e}")
-            return jsonify({'success': False, 'error': f'Prediction failed: {e}'}), 500
-
+            return jsonify({'success': False, 'error': f'Prediction failed'}), 500
 
 
 if __name__ == "__main__":

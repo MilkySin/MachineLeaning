@@ -18,14 +18,14 @@ const myDropzone = new Dropzone("#dropzone", {
     const errorElement = document.getElementById("error"); // Get the error element
 
     this.on("addedfile", function (file) {
-      // Hide the upload image when a file is added
-      uploadImageElement.style.display = "none";
-      uploadTextImageElement.style.display = "none";
+      if (this.files.length === 1) {
+        uploadImageElement.style.display = "none";
+        uploadTextImageElement.style.display = "none";
+      }
     });
 
-    this.on("removedfile", function (file) {
+    this.on("removedfile", function () {
       if (this.files.length === 0) {
-        // Show the upload image when all files are removed
         uploadImageElement.style.display = "block";
         uploadTextImageElement.style.display = "block";
         errorElement.style.display = "none";
@@ -44,53 +44,102 @@ const myDropzone = new Dropzone("#dropzone", {
 
 // Add event listener to the Classify button
 document.getElementById("submitBtn").addEventListener("click", function () {
-    const errorElement = document.getElementById("error");
-    errorElement.style.display = "none";
+  const errorElement = document.getElementById("error");
+  errorElement.style.display = "none";
 
-    if (myDropzone.getAcceptedFiles().length === 0) {
-        errorElement.textContent = "Please upload an image before classifying.";
-        errorElement.style.display = "block";
-        return;
-    }
-    errorElement.textContent = "Classifying image...";
+  if (myDropzone.getAcceptedFiles().length === 0) {
+    errorElement.textContent = "Please upload an image before classifying.";
     errorElement.style.display = "block";
-    myDropzone.processQueue(); // Start the upload and classification
+    return;
+  }
+  errorElement.textContent = "Classifying image...";
+  errorElement.style.display = "block";
+  myDropzone.processQueue();
 });
 
 myDropzone.on("success", function (file, response) {
-    const errorElement = document.getElementById("error");
-    const vggPredictionSpan = document.getElementById("class-vgg");
-    const mobileNetPredictionSpan = document.getElementById("class-mobile-net");
-    const cnnPredictionSpan = document.getElementById("class-CNN");
-    const classTable = document.getElementById("classTable");
+  const errorElement = document.getElementById("error");
+  const classTable = document.getElementById("classTable");
 
-    // Now trigger classification
-    const formData = new FormData();
-    formData.append("file", file);
+  // Now trigger classification
+  const formData = new FormData();
+  formData.append("file", file);
 
-    fetch("/classify_image", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) {
-            errorElement.textContent = data.error;
-            errorElement.style.display = "block";
-            classTable.style.display = "none";
-            return;
-        }
-
-        vggPredictionSpan.textContent = data.predictions.vgg;
-        mobileNetPredictionSpan.textContent = data.predictions.mobile_net;
-        cnnPredictionSpan.textContent = data.predictions.cnn;
-
-        errorElement.style.display = "none";
-        classTable.style.display = "table";
-    })
-    .catch(err => {
-        errorElement.textContent = "Classification failed: " + err;
+  fetch("/classify_image", {
+    method: "POST",
+    body: formData,
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.error) {
+        errorElement.textContent = data.error;
         errorElement.style.display = "block";
         classTable.style.display = "none";
+        return;
+      }
+
+      document.getElementById("vgg-label").textContent =
+        data.predictions.vgg.label;
+      document.getElementById("vgg-confidence").textContent =
+        data.predictions.vgg.confidence;
+
+      document.getElementById("mobile-label").textContent =
+        data.predictions.mobile_net.label;
+      document.getElementById("mobile-confidence").textContent =
+        data.predictions.mobile_net.confidence;
+
+      document.getElementById("cnn-label").textContent =
+        data.predictions.cnn.label;
+      document.getElementById("cnn-confidence").textContent =
+        data.predictions.cnn.confidence;
+
+      errorElement.style.display = "none";
+      classTable.style.display = "table";
+    })
+    .catch((err) => {
+      errorElement.textContent = "Classification failed: " + err;
+      errorElement.style.display = "block";
+      classTable.style.display = "none";
     });
 });
+
+let currentMode = "class";
+
+document
+  .getElementById("link-classify-disease")
+  .addEventListener("click", function (e) {
+    e.preventDefault();
+    currentMode = "class";
+    document.getElementById("prediction-type-header").textContent =
+      "Predicted Disease";
+    clearTable();
+  });
+
+document
+  .getElementById("link-classify-age")
+  .addEventListener("click", function (e) {
+    e.preventDefault();
+    currentMode = "age";
+    document.getElementById("prediction-type-header").textContent =
+      "Predicted Age";
+    clearTable();
+  });
+
+document
+  .getElementById("link-classify-variety")
+  .addEventListener("click", function (e) {
+    e.preventDefault();
+    currentMode = "variety";
+    document.getElementById("prediction-type-header").textContent =
+      "Predicted Variety";
+    clearTable();
+  });
+
+function clearTable() {
+  document.getElementById("vgg-label").textContent = "-";
+  document.getElementById("vgg-confidence").textContent = "-";
+  document.getElementById("mobile-label").textContent = "-";
+  document.getElementById("mobile-confidence").textContent = "-";
+  document.getElementById("cnn-label").textContent = "-";
+  document.getElementById("cnn-confidence").textContent = "-";
+}

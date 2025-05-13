@@ -54,6 +54,15 @@
   text-align: center;
 }
 
+[data-dz-errormessage] {
+    display: none !important;
+}
+
+.navbar-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Space between navbars */
+}
 
 #classTable {
   font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
