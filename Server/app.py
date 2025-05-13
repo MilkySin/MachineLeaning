@@ -19,7 +19,7 @@ app = Flask(__name__,
             static_folder=os.path.join(UI_DIR, 'static'))  # Corrected typo here
 
 # Load models with progress indication
-def load_model_with_progress(model_name, model_path):
+def loader(model_name, model_path):
     print(f"Loading {model_name} model...")
     start_time = time.time()
     model = tf.keras.models.load_model(model_path)
@@ -27,9 +27,9 @@ def load_model_with_progress(model_name, model_path):
     return model
 
 # Load models
-model_vgg = load_model_with_progress('VGG', 'models/task1_vgg_model.h5')
-model_mobile_net = load_model_with_progress('MobileNet', 'models/task1_mobile_net_model.h5')
-model_cnn = load_model_with_progress('CNN', 'models/task1_cnn_model.h5')
+model_vgg = loader('VGG', 'models/task1_vgg_model.h5')
+model_mobile_net = loader('MobileNet', 'models/task1_mobile_net_model.h5')
+model_cnn = loader('CNN', 'models/task1_cnn_model.h5')
 
 # Configure upload folder
 app.config['UPLOAD_FOLDER'] = PIC_DIR
