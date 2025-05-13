@@ -78,9 +78,9 @@ def classify_image():
         try:
             # Make predictions using the models (assuming they handle image loading internally)
             print("Making predictions...")
-            vgg_prediction = model_vgg.predict([file_path])
-            mobile_net_prediction = model_mobile_net.predict([file_path])
-            cnn_prediction = model_cnn.predict([file_path])
+            vgg_prediction = model_vgg.predict([file])
+            mobile_net_prediction = model_mobile_net.predict([file])
+            cnn_prediction = model_cnn.predict([file])
 
             vgg_class = int(np.argmax(vgg_prediction, axis=1)[0])
             mobile_net_class = int(np.argmax(mobile_net_prediction, axis=1)[0])
