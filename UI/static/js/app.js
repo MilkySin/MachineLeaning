@@ -44,16 +44,54 @@ const myDropzone = new Dropzone("#dropzone", {
 
 // Add event listener to the Classify button
 document.getElementById("submitBtn").addEventListener("click", function () {
-  const errorElement = document.getElementById("error"); // Get the error element
+  const errorElement = document.getElementById("error");
   errorElement.style.display = "none";
 
   if (myDropzone.getAcceptedFiles().length === 0) {
     errorElement.textContent = "Please upload an image before classifying.";
     errorElement.style.display = "block";
-    return; //  STOP here.  Do NOT proceed to upload if no file.
+    return;
   }
-  myDropzone.processQueue();
+
+  const file = myDropzone.getAcceptedFiles()[0];
+  const formData = new FormData();
+  formData.append("file", file);
 
   errorElement.textContent = "Classifying image...";
   errorElement.style.display = "block";
+
+  // Step 1: Upload the file
+  fetch("/upload-handler", {
+    method: "POST",
+    body: formData,
+  })
+    .then((uploadRes) => uploadRes.json())
+    .then((uploadData) => {
+      if (!uploadData.success) {
+        throw new Error(uploadData.error || "Upload failed.");
+      }
+
+      // Step 2: Send file again for classification
+      return fetch("/classify_image", {
+        method: "POST",
+        body: formData,
+      });
+    })
+    .then((classifyRes) => classifyRes.json())
+    .then((result) => {
+      if (result.predictions) {
+        errorElement.textContent = "Classification successful!";
+        console.log("Predictions:", result.predictions);
+        document.getElementById("class-vgg").textContent = result.predictions.vgg || "N/A";
+        document.getElementById("class-mobile-net").textContent = result.predictions.mobile_net || "N/A";
+        document.getElementById("class-CNN").textContent = result.predictions.cnn || "N/A";
+        // Optionally display results on the UI
+      } else {
+        throw new Error(result.error || "Classification failed.");
+      }
+    })
+    .catch((err) => {
+      errorElement.textContent = err.message;
+      errorElement.style.display = "block";
+    });
 });

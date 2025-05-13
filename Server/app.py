@@ -6,6 +6,7 @@ import tensorflow as tf
 import numpy as np
 import json
 import time
+from tensorflow.keras.preprocessing import image
 
 # Get absolute paths
 from pathlib import Path
@@ -78,21 +79,32 @@ def upload_handler():
     return jsonify({'success': False, 'error': 'Invalid request method'}), 400
 
 
+def preprocess_image(img_path):
+    img = image.load_img(img_path, target_size=(224, 224))  # Use size appropriate to your model
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)  # Shape: (1, 224, 224, 3)
+    img_array = img_array / 255.0  # Normalize if your models were trained on normalized images
+    return img_array
+
+
 @app.route('/classify_image', methods=['POST'])
 def classify_image():
     file = request.files['file']
     if file:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        print(f"Classifying image: {file.filename}")
         file.save(file_path)
+        print(f"Classifying image: {file.filename}")
 
         try:
-            # Make predictions using the models (assuming they handle image loading internally)
-            print("Making predictions...")
-            vgg_prediction = model_vgg.predict([file])
-            mobile_net_prediction = model_mobile_net.predict([file])
-            cnn_prediction = model_cnn.predict([file])
+            # Preprocess image for prediction
+            img_array = preprocess_image(file_path)
 
+            # Predict with all models
+            vgg_prediction = model_vgg.predict(img_array)
+            mobile_net_prediction = model_mobile_net.predict(img_array)
+            cnn_prediction = model_cnn.predict(img_array)
+
+            # Get the predicted class index
             vgg_class = int(np.argmax(vgg_prediction, axis=1)[0])
             mobile_net_class = int(np.argmax(mobile_net_prediction, axis=1)[0])
             cnn_class = int(np.argmax(cnn_prediction, axis=1)[0])
@@ -103,11 +115,8 @@ def classify_image():
                 'cnn': cnn_class
             }
 
-            print(f"Predictions for {file.filename}: {predictions}")
-
+            # Save to predictions.json
             prediction_file_path = os.path.join(UPLOAD_DIR, 'predictions.json')
-
-            # Save predictions to JSON
             if os.path.exists(prediction_file_path):
                 with open(prediction_file_path, 'r') as f:
                     data = json.load(f)
@@ -119,11 +128,11 @@ def classify_image():
             with open(prediction_file_path, 'w') as f:
                 json.dump(data, f, indent=4)
 
-            print(f"Predictions saved successfully for {file.filename}")
             return jsonify({'predictions': predictions, 'message': 'Image classified and predictions saved successfully'})
         except Exception as e:
             print(f"Error during classification: {e}")
             return jsonify({'success': False, 'error': f'Prediction failed: {e}'}), 500
+
 
 
 if __name__ == "__main__":
