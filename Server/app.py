@@ -8,10 +8,19 @@ import json
 import time
 
 # Get absolute paths
-BASE_DIR = Path(__file__).resolve().parent.parent
-UI_DIR = os.path.join(BASE_DIR, 'UI')
-DATABASE_DIR = os.path.join(BASE_DIR, 'database')
-PIC_DIR = os.path.join(DATABASE_DIR, 'pic')
+from pathlib import Path
+import os
+
+# Points to Server/
+BASE_DIR = Path(__file__).resolve().parent
+
+# UI folder is sibling to Server
+UI_DIR = os.path.join(BASE_DIR.parent, 'UI')
+
+# Uploads and models are inside Server
+UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
+PIC_DIR = os.path.join(UPLOAD_DIR, 'pic')
+
 
 app = Flask(__name__,
             template_folder=os.path.join(UI_DIR, 'templates'),
@@ -85,7 +94,7 @@ def classify_image():
 
             print(f"Predictions for {file.filename}: {predictions}")
 
-            prediction_file_path = os.path.join(DATABASE_DIR, 'predictions.json')
+            prediction_file_path = os.path.join(UPLOAD_DIR, 'predictions.json')
 
             # Save predictions to JSON
             if os.path.exists(prediction_file_path):
