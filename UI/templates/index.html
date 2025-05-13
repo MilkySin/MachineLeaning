@@ -16,7 +16,7 @@
         <div class="col-sm-4 mx-auto text-center">
             <div class="row">
                 <div class="col-12">
-                    <form action="/file-upload" class="dropzone mx-auto" id="dropzone">
+                    <form action="/upload-handler" class="dropzone mx-auto" id="dropzone" method="post" enctype="multipart/form-data">
                         <div class="dz-message needsclick">
                             <img id="upload-image" src="{{ url_for('static', filename='images/upload.png')}}" width="100vw" height="100vw"><br>
                             <span id="upload-image-text" class="note needsclick">Drop files here or click to upload</span>
