@@ -58,31 +58,32 @@ document.getElementById("submitBtn").addEventListener("click", function () {
     });
 
     myDropzone.on("success", function (file, response) {
-        const resultsDiv = document.getElementById("results");
-        const vggPredictionSpan = document.getElementById("vgg-prediction");
-        const mobileNetPredictionSpan = document.getElementById("mobile-net-prediction");
-        const cnnPredictionSpan = document.getElementById("cnn-prediction");
+        const vggPredictionSpan = document.getElementById("class-vgg"); // changed ids
+        const mobileNetPredictionSpan = document.getElementById("class-mobile-net");
+        const cnnPredictionSpan = document.getElementById("class-CNN");
         const errorElement = document.getElementById("error");
+        const classTable = document.getElementById("classTable");
 
         if (response.error) {
             errorElement.textContent = response.error;
             errorElement.style.display = "block";
-            resultsDiv.style.display = "none";
+            classTable.style.display = "none";
             return;
         }
 
         vggPredictionSpan.textContent = response.predictions.vgg;
         mobileNetPredictionSpan.textContent = response.predictions.mobile_net;
         cnnPredictionSpan.textContent = response.predictions.cnn;
-        resultsDiv.style.display = "block";
+        classTable.style.display = "table"; //show table
         errorElement.style.display = "none";
+
     });
 
     myDropzone.on("error", function (file, errorMessage) {
         const errorElement = document.getElementById("error");
         errorElement.textContent = "Error during classification: " + errorMessage;
         errorElement.style.display = "block";
-        document.getElementById("results").style.display = "none";
+        document.getElementById("classTable").style.display = "none"; //hide table
     });
 
     myDropzone.on("complete", function() {
