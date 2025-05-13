@@ -44,48 +44,53 @@ const myDropzone = new Dropzone("#dropzone", {
 
 // Add event listener to the Classify button
 document.getElementById("submitBtn").addEventListener("click", function () {
-        const errorElement = document.getElementById("error");
-        errorElement.style.display = "none";
+    const errorElement = document.getElementById("error");
+    errorElement.style.display = "none";
 
-        if (myDropzone.getAcceptedFiles().length === 0) {
-            errorElement.textContent = "Please upload an image before classifying.";
-            errorElement.style.display = "block";
-            return;
-        }
-        errorElement.textContent = "Classifying image...";
+    if (myDropzone.getAcceptedFiles().length === 0) {
+        errorElement.textContent = "Please upload an image before classifying.";
         errorElement.style.display = "block";
-        myDropzone.processQueue(); // Start the upload and classification
-    });
+        return;
+    }
+    errorElement.textContent = "Classifying image...";
+    errorElement.style.display = "block";
+    myDropzone.processQueue(); // Start the upload and classification
+});
 
-    myDropzone.on("success", function (file, response) {
-        const vggPredictionSpan = document.getElementById("class-vgg"); // changed ids
-        const mobileNetPredictionSpan = document.getElementById("class-mobile-net");
-        const cnnPredictionSpan = document.getElementById("class-CNN");
-        const errorElement = document.getElementById("error");
-        const classTable = document.getElementById("classTable");
+myDropzone.on("success", function (file, response) {
+    const errorElement = document.getElementById("error");
+    const vggPredictionSpan = document.getElementById("class-vgg");
+    const mobileNetPredictionSpan = document.getElementById("class-mobile-net");
+    const cnnPredictionSpan = document.getElementById("class-CNN");
+    const classTable = document.getElementById("classTable");
 
-        if (response.error) {
-            errorElement.textContent = response.error;
+    // Now trigger classification
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("/classify_image", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            errorElement.textContent = data.error;
             errorElement.style.display = "block";
             classTable.style.display = "none";
             return;
         }
 
-        vggPredictionSpan.textContent = response.predictions.vgg;
-        mobileNetPredictionSpan.textContent = response.predictions.mobile_net;
-        cnnPredictionSpan.textContent = response.predictions.cnn;
-        classTable.style.display = "table"; //show table
+        vggPredictionSpan.textContent = data.predictions.vgg;
+        mobileNetPredictionSpan.textContent = data.predictions.mobile_net;
+        cnnPredictionSpan.textContent = data.predictions.cnn;
+
         errorElement.style.display = "none";
-
-    });
-
-    myDropzone.on("error", function (file, errorMessage) {
-        const errorElement = document.getElementById("error");
-        errorElement.textContent = "Error during classification: " + errorMessage;
+        classTable.style.display = "table";
+    })
+    .catch(err => {
+        errorElement.textContent = "Classification failed: " + err;
         errorElement.style.display = "block";
-        document.getElementById("classTable").style.display = "none"; //hide table
+        classTable.style.display = "none";
     });
-
-    myDropzone.on("complete", function() {
-        myDropzone.removeAllFiles();
-    });
+});
