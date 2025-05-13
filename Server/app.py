@@ -44,6 +44,8 @@ app.config['UPLOAD_FOLDER'] = PIC_DIR
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -57,14 +59,23 @@ def upload_handler():
     if file.filename == '':
         return jsonify({'success': False, 'error': 'No selected file'}), 400
     if file:
+        # Clear the upload folder before saving the new file
         try:
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(file_path)
-            print(f"File uploaded successfully: {file.filename}")
-            return jsonify({'success': True, 'message': 'File uploaded successfully'})
+            shutil.rmtree(app.config['UPLOAD_FOLDER'])
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            PIC_DIR = os.path.join(UPLOAD_DIR, 'pic')
+            os.makedirs(PIC_DIR, exist_ok=True)
+            app.config['UPLOAD_FOLDER'] = PIC_DIR
+            print(
+                f"Upload folder '{app.config['UPLOAD_FOLDER']}' cleared before new upload.")
         except Exception as e:
-            print(f"Error during file upload: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            print(f"Error clearing upload folder: {e}")
+            return jsonify({'success': False, 'error': 'Failed to clear folder'}), 500
+
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(filename)
+        return jsonify({'success': True, 'message': 'File uploaded and folder cleared'})
+    return jsonify({'success': False, 'error': 'Invalid request method'}), 400
 
 
 @app.route('/classify_image', methods=['POST'])
@@ -72,8 +83,8 @@ def classify_image():
     file = request.files['file']
     if file:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(file_path)
         print(f"Classifying image: {file.filename}")
+        file.save(file_path)
 
         try:
             # Make predictions using the models (assuming they handle image loading internally)
