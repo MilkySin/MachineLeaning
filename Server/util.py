@@ -31,6 +31,7 @@ UI_DIR = os.path.join(BASE_DIR.parent, "UI")
 # Uploads and models are inside Server
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 PIC_DIR = os.path.join(UPLOAD_DIR, "pic")
+DATABASE_DIR = os.path.join(BASE_DIR.parent, "database")
 
 
 def loader(model_name, model_path):
@@ -42,9 +43,9 @@ def loader(model_name, model_path):
 
 
 # Load models
-model_vgg = loader("VGG", "models/task1_vgg_model.h5")
-model_mobile_net = loader("MobileNet", "models/task1_mobile_net_model.h5")
-model_cnn = loader("CNN", "models/task1_cnn_model.h5")
+model_vgg = loader("VGG", "../database/models/Task1/task1_vgg_model.h5")
+model_mobile_net = loader("MobileNet", "../database/models/Task1/task1_mobile_net_model.h5")
+model_cnn = loader("CNN", "../database/models/Task1/task1_cnn_model.h5")
 
 # normalize the image
 
@@ -94,7 +95,7 @@ def classify_image(file, file_path):
         }
 
         # Save to predictions.json
-        prediction_file_path = os.path.join(UPLOAD_DIR, "predictions.json")
+        prediction_file_path = os.path.join(DATABASE_DIR, "predictions.json")
         data = {file.filename: predictions}
 
         with open(prediction_file_path, "w") as f:

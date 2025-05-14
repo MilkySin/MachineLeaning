@@ -2,7 +2,11 @@ from flask import Flask, render_template, request, jsonify
 import os
 from pathlib import Path
 import shutil
-from util import *
+import tensorflow as tf
+import numpy as np
+import json
+import time
+import util
 
 # Get absolute paths
 from pathlib import Path
@@ -12,68 +16,130 @@ import os
 BASE_DIR = Path(__file__).resolve().parent
 
 # UI folder is sibling to Server
-UI_DIR = os.path.join(BASE_DIR.parent, "UI")
+UI_DIR = os.path.join(BASE_DIR.parent, 'UI')
 
 # Uploads and models are inside Server
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-PIC_DIR = os.path.join(UPLOAD_DIR, "pic")
+UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
+PIC_DIR = os.path.join(UPLOAD_DIR, 'pic')
+DATABASE_DIR = os.path.join(BASE_DIR.parent, 'database')
+
+app = Flask(__name__,
+            template_folder=os.path.join(UI_DIR, 'templates'),
+            static_folder=os.path.join(UI_DIR, 'static'))
+
+# Load models with progress indication
 
 
-app = Flask(
-    __name__,
-    template_folder=os.path.join(UI_DIR, "templates"),
-    static_folder=os.path.join(UI_DIR, "static"),
-)
+def loader(model_name, model_path):
+    print(f"Loading {model_name} model...")
+    start_time = time.time()
+    model = tf.keras.models.load_model(model_path)
+    print(f"{model_name} model loaded in {time.time() - start_time:.2f} seconds.")
+    return model
+
+
+# Load models
+model_vgg = loader('VGG', "../database/models/Task1/task1_vgg_model.h5")
+model_mobile_net = loader('MobileNet', "../database/models/Task1/task1_mobile_net_model.h5")
+model_cnn = loader('CNN', "../database/models/Task1/task1_cnn_model.h5")
 
 # Configure upload folder
-app.config["UPLOAD_FOLDER"] = PIC_DIR
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+app.config['UPLOAD_FOLDER'] = PIC_DIR
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+class_labels = ['bacterial_leaf_blight', 'bacterial_leaf_streak', 'bacterial_panicle_blight',
+                'blast', 'brown_spot', 'dead_heart', 'downy_mildew', 'hispa', 'normal', 'tungro']
 
 
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
 
-@app.route("/upload-handler", methods=["POST"])
+@app.route('/upload-handler', methods=['POST'])
 def upload_handler():
-    if "file" not in request.files:
-        return jsonify({"success": False, "error": "No file part in the request"}), 400
-
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"success": False, "error": "No selected file"}), 400
-
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file part in the request'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'}), 400
     if file:
         # Clear the upload folder before saving the new file
         try:
-            shutil.rmtree(app.config["UPLOAD_FOLDER"])
-            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-            PIC_DIR = os.path.join(UPLOAD_DIR, "pic")
+            shutil.rmtree(app.config['UPLOAD_FOLDER'])
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            PIC_DIR = os.path.join(UPLOAD_DIR, 'pic')
             os.makedirs(PIC_DIR, exist_ok=True)
-            app.config["UPLOAD_FOLDER"] = PIC_DIR
+            app.config['UPLOAD_FOLDER'] = PIC_DIR
             print(
-                f"Upload folder '{app.config['UPLOAD_FOLDER']}' cleared before new upload."
-            )
+                f"Upload folder '{app.config['UPLOAD_FOLDER']}' cleared before new upload.")
         except Exception as e:
             print(f"Error clearing upload folder: {e}")
-            return jsonify({"success": False, "error": "Failed to clear folder"}), 500
+            return jsonify({'success': False, 'error': 'Failed to clear folder'}), 500
 
-        filename = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filename)
-        return jsonify({"success": True, "message": "File uploaded and folder cleared"})
-    return jsonify({"success": False, "error": "Invalid request method"}), 400
+        return jsonify({'success': True, 'message': 'File uploaded and folder cleared'})
+    return jsonify({'success': False, 'error': 'Invalid request method'}), 400
 
 
-@app.route("/classify_image", methods=["POST"])
+@app.route('/classify_image', methods=['POST'])
 def classify_image():
-    file = request.files["file"]
+    file = request.files['file']
     if file:
-        file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(file_path)
         print(f"Classifying image: {file.filename}")
-        return classify_image(file, file_path)
-    return jsonify({"success": False, "error": "Invalid request method"}), 400
+
+        try:
+            # Preprocess image for prediction
+            img_array = util.preprocess_image(file_path)
+
+            # Predict with all models
+            vgg_prediction = model_vgg.predict(img_array)
+            mobile_net_prediction = model_mobile_net.predict(img_array)
+            cnn_prediction = model_cnn.predict(img_array)
+
+            vgg_index = int(np.argmax(vgg_prediction, axis=1)[0])
+            vgg_confidence = float(np.max(vgg_prediction, axis=1)[0])
+            vgg_label = class_labels[vgg_index]
+
+            mobile_index = int(np.argmax(mobile_net_prediction, axis=1)[0])
+            mobile_confidence = float(np.max(mobile_net_prediction, axis=1)[0])
+            mobile_label = class_labels[mobile_index]
+
+            cnn_index = int(np.argmax(cnn_prediction, axis=1)[0])
+            cnn_confidence = float(np.max(cnn_prediction, axis=1)[0])
+            cnn_label = class_labels[cnn_index]
+
+            predictions = {
+                'vgg': {
+                    'label': vgg_label,
+                    'confidence': f"{vgg_confidence * 100:.2f}%"
+                },
+                'mobile_net': {
+                    'label': mobile_label,
+                    'confidence': f"{mobile_confidence * 100:.2f}%"
+                },
+                'cnn': {
+                    'label': cnn_label,
+                    'confidence': f"{cnn_confidence * 100:.2f}%"
+                }
+            }
+
+            # Save to predictions.json
+            prediction_file_path = os.path.join(DATABASE_DIR, 'predictions.json')
+            data = {
+                file.filename: predictions
+                }
+
+            with open(prediction_file_path, 'w') as f:
+                json.dump(data, f, indent=4)
+
+            return jsonify({'predictions': predictions, 'message': 'Image classified and predictions saved successfully'})
+        except Exception as e:
+            print(f"Error during classification: {e}")
+            return jsonify({'success': False, 'error': f'Prediction failed'}), 500
 
 
 if __name__ == "__main__":
