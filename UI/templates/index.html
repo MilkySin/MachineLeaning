@@ -1,105 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/main.css')}}"
-    />
-    <link
-      rel="icon"
-      href="{{ url_for('static', filename='images/favicon.ico') }}"
-      type="image/x-icon"
-    />
-  </head>
-  <body>
-    <div class="navbar-container">
-      <nav class="navbar navbar-light bg-light justify-content-center">
-        <a class="navbar-brand" id="link-classify-disease">Classify Disease</a>
-      </nav>
 
-      <nav class="navbar navbar-light bg-light justify-content-center">
-        <a class="navbar-brand" id="link-classify-age">Classify Age</a>
-      </nav>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Document</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css')}}" />
+	<link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon" />
+</head>
 
-      <nav class="navbar navbar-light bg-light justify-content-center">
-        <a class="navbar-brand" id="link-classify-variety">Classify Variety</a>
-      </nav>
-    </div>
+<body>
+	<div class="navbar-container">
+		<nav class="navbar navbar-light bg-light justify-content-center">
+			<a class="navbar-brand" href="#classify-disease" id="link-classify-disease">Classify Disease</a>
+		</nav>
 
-    <div class="container">
-      <div class="col-sm-4 mx-auto text-center">
-        <div class="row">
-          <div class="col-12">
-            <form
-              action="/upload-handler"
-              class="dropzone mx-auto"
-              id="dropzone"
-              method="post"
-              enctype="multipart/form-data"
-            >
-              <div class="dz-message needsclick">
-                <img
-                  id="upload-image"
-                  src="{{ url_for('static', filename='images/upload.png')}}"
-                  width="100vw"
-                  height="100vw"
-                /><br />
-                <span id="upload-image-text" class="note needsclick"
-                  >Drop files here or click to upload</span
-                >
-              </div>
-            </form>
-          </div>
-        </div>
-        <div class="row mt-3">
-          <div class="col-12">
-            <button id="submitBtn" type="button" class="btn btn-success">
-              Classify
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-8 error mx-auto text-center" id="error">
-        <p></p>
-      </div>
-      <div class="col-sm-4" id="resultHolder"></div>
-      <div class="col-sm-6 mx-auto mt-4" id="divClassTable">
-        <table class="table table-bordered text-center" id="classTable">
-          <thead class="thead-light">
-            <tr>
-              <th>Model</th>
-              <th id="prediction-type-header">Predicted Disease</th>
-              <th>Confidence</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>VGG</td>
-              <td id="vgg-label">-</td>
-              <td id="vgg-confidence">-</td>
-            </tr>
-            <tr>
-              <td>MobileNet</td>
-              <td id="mobile-label">-</td>
-              <td id="mobile-confidence">-</td>
-            </tr>
-            <tr>
-              <td>CNN</td>
-              <td id="cnn-label">-</td>
-              <td id="cnn-confidence">-</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </body>
-  <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
-  <script src="{{ url_for('static', filename='js/app.js')}}"></script>
+		<nav class="navbar navbar-light bg-light justify-content-center">
+			<a class="navbar-brand" href="#classify-age" id="link-classify-age">Classify Age</a>
+		</nav>
+
+		<nav class="navbar navbar-light bg-light justify-content-center">
+			<a class="navbar-brand" href="#classify-variety" id="link-classify-variety">Classify Variety</a>
+		</nav>
+	</div>
+
+	<div class="container">
+		<div class="col-sm-4 mx-auto text-center">
+			<div class="row">
+				<div class="col-12">
+					<form action="/upload-handler" class="dropzone mx-auto" id="dropzone" method="post"
+						enctype="multipart/form-data">
+						<div class="dz-message needsclick">
+							<img id="upload-image" src="{{ url_for('static', filename='images/upload.png')}}"
+								width="100vw" height="100vw" /><br />
+							<span id="upload-image-text" class="note needsclick">Drop files here or click to
+								upload</span>
+						</div>
+					</form>
+				</div>
+			</div>
+			<div class="row mt-3">
+				<div class="col-12">
+					<button id="submitBtn" type="button" class="btn btn-success">
+						Classify
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-8 error mx-auto text-center" id="error">
+			<p></p>
+		</div>
+		<div class="col-sm-4" id="resultHolder"></div>
+		<div class="col-sm-6 mx-auto mt-4" id="divClassTable">
+			<table class="table table-bordered text-center" id="classTable">
+				<thead class="thead-light">
+					<tr>
+						<th>Model</th>
+						<th id="prediction-type-header">Predicted Disease</th>
+						<th>Confidence</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>VGG</td>
+						<td id="vgg-label">-</td>
+						<td id="vgg-confidence">-</td>
+					</tr>
+					<tr>
+						<td>MobileNet</td>
+						<td id="mobile-label">-</td>
+						<td id="mobile-confidence">-</td>
+					</tr>
+					<tr>
+						<td>CNN</td>
+						<td id="cnn-label">-</td>
+						<td id="cnn-confidence">-</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+<script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js')}}"></script>
+
 </html>
