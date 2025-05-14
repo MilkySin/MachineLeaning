@@ -1,0 +1,16 @@
+{
+    "image_2025-05-15_021830800.png": {
+        "vgg": {
+            "label": "tungro",
+            "confidence": "99.92%"
+        },
+        "mobile_net": {
+            "label": "tungro",
+            "confidence": "55.69%"
+        },
+        "cnn": {
+            "label": "tungro",
+            "confidence": "95.93%"
+        }
+    }
+}
