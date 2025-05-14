@@ -128,13 +128,9 @@ def classify_image():
 
             # Save to predictions.json
             prediction_file_path = os.path.join(UPLOAD_DIR, 'predictions.json')
-            if os.path.exists(prediction_file_path):
-                with open(prediction_file_path, 'r') as f:
-                    data = json.load(f)
-            else:
-                data = {}
-
-            data[file.filename] = predictions
+            data = {
+                file.filename: predictions
+                }
 
             with open(prediction_file_path, 'w') as f:
                 json.dump(data, f, indent=4)
