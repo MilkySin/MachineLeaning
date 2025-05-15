@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import shutil
 import util
+from flask_cors import CORS
 
 # Get absolute paths
 from pathlib import Path
@@ -25,6 +26,8 @@ app = Flask(
     static_folder=os.path.join(UI_DIR, "static"),
 )
 
+CORS(app, origins="https://MilkySin.github.io")
+
 
 @app.route("/")
 def index():
@@ -32,6 +35,7 @@ def index():
 
 
 app.config["UPLOAD_FOLDER"] = PIC_DIR
+util.load_all()
 
 
 @app.route("/upload-handler", methods=["POST"])
@@ -77,5 +81,4 @@ def classify_image():
 
 
 if __name__ == "__main__":
-    util.load_all()
     app.run(debug=False)

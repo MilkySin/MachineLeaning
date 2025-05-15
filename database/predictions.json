@@ -1,16 +1,16 @@
 {
-    "image_2025-05-15_021830800.png": {
+    "101440.jpg": {
         "vgg": {
-            "label": "tungro",
-            "confidence": "99.92%"
+            "label": "brown_spot",
+            "confidence": "99.94%"
         },
         "mobile_net": {
-            "label": "tungro",
-            "confidence": "55.69%"
+            "label": "brown_spot",
+            "confidence": "43.62%"
         },
         "cnn": {
-            "label": "tungro",
-            "confidence": "95.93%"
+            "label": "brown_spot",
+            "confidence": "89.92%"
         }
     }
 }
