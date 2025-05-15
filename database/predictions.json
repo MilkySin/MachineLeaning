@@ -1,16 +1,16 @@
 {
-    "image_2025-05-15_021830800.png": {
-        "vgg": {
-            "label": "tungro",
-            "confidence": "99.92%"
+    "image_2025-05-15_232519572.png": {
+        "resnet50": {
+            "label": "Surya",
+            "confidence": "96.74%"
         },
-        "mobile_net": {
-            "label": "tungro",
-            "confidence": "55.69%"
+        "efficient_net": {
+            "label": "Surya",
+            "confidence": "96.41%"
         },
         "cnn": {
-            "label": "tungro",
-            "confidence": "95.93%"
+            "label": "Surya",
+            "confidence": "70.81%"
         }
     }
 }

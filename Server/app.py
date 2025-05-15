@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import shutil
 import util
+from flask_cors import CORS
 
 # Get absolute paths
 from pathlib import Path
@@ -11,26 +12,13 @@ import os
 # Points to Server/
 BASE_DIR = Path(__file__).resolve().parent
 
-# UI folder is sibling to Server
-UI_DIR = os.path.join(BASE_DIR.parent, "UI")
-
 # Uploads and models are inside Server
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 PIC_DIR = os.path.join(UPLOAD_DIR, "pic")
 DATABASE_DIR = os.path.join(BASE_DIR.parent, "database")
 
-app = Flask(
-    __name__,
-    template_folder=os.path.join(UI_DIR, "templates"),
-    static_folder=os.path.join(UI_DIR, "static"),
-)
-
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-
+app = Flask(__name__)
+CORS(app, origins="https://milkysin.github.io")
 app.config["UPLOAD_FOLDER"] = PIC_DIR
 
 
@@ -78,4 +66,4 @@ def classify_image():
 
 if __name__ == "__main__":
     util.load_all()
-    app.run(debug=False)
+    app.run(debug=False, port=5000)
