@@ -23,8 +23,19 @@ class_labels_disease = [
     "tungro",
 ]
 
-class_labels_varieties = ['ADT45', 'AndraPonni', 'AtchayaPonni',
-                          'IR20', 'KarnatakaPonni', 'Onthanel', 'Ponni', 'RR', 'Surya', 'Zonal']
+class_labels_varieties = [
+    "ADT45",
+    "AndraPonni",
+    "AtchayaPonni",
+    "IR20",
+    "KarnatakaPonni",
+    "Onthanel",
+    "Ponni",
+    "RR",
+    "Surya",
+    "Zonal",
+]
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -48,7 +59,8 @@ def loader(model_name, model_path):
 def load_all():
     global task1_model_vgg, task1_model_mobile_net, task1_model_cnn
     global task2_resnet50_model, task2_efficient_net_model, task2_model_cnn
-# Load models
+    global task3_nasnet_model, task3_model_cnn
+    # Load models
     task1_model_vgg = loader(
         "VGG", "../database/models/Task1/task1_vgg_model.h5")
     task1_model_mobile_net = loader(
@@ -65,6 +77,13 @@ def load_all():
     )
     task2_model_cnn = loader(
         "CNN", "../database/models/Task2/task2_cnn_model.h5")
+
+    task3_nasnet_model = loader(
+        "Nasnet", "../database/models/Task3/task3_nasnet_model.h5"
+    )
+    task3_model_cnn = loader(
+        "CNN", "../database/models/Task3/task3_cnn_model.h5")
+
 
 # normalize the image
 
@@ -150,7 +169,23 @@ def classify(file, file_path, mode):
                 },
             }
 
-        # Save to predictions.json
+        if mode == "age":
+            nasnet_prediction = task3_nasnet_model.predict(img_array)
+            cnn_prediction = task3_model_cnn.predict(img_array)
+
+            nasnet_index = nasnet_prediction[0][0][0]
+
+            cnn_index = cnn_prediction[0][0]
+
+            predictions = {
+                "nasnet": {
+                    "label": f"{nasnet_index * 80:.2f}",
+                },
+                "cnn": {
+                    "label": f"{cnn_index * 80:.2f}",
+                },
+            }
+            # Save to predictions.json
         prediction_file_path = os.path.join(DATABASE_DIR, "predictions.json")
         data = {file.filename: predictions}
 
