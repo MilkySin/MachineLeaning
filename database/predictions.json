@@ -1,16 +1,16 @@
 {
-    "101440.jpg": {
+    "200768.jpg": {
         "vgg": {
-            "label": "brown_spot",
-            "confidence": "99.94%"
+            "label": "dead_heart",
+            "confidence": "99.76%"
         },
         "mobile_net": {
-            "label": "brown_spot",
-            "confidence": "43.62%"
+            "label": "dead_heart",
+            "confidence": "44.73%"
         },
         "cnn": {
-            "label": "brown_spot",
-            "confidence": "89.92%"
+            "label": "dead_heart",
+            "confidence": "93.38%"
         }
     }
 }
