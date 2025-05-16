@@ -26,7 +26,7 @@ app = Flask(
     static_folder=os.path.join(UI_DIR, "static"),
 )
 
-CORS(app, origins="https://MilkySin.github.io")
+CORS(app)
 
 
 @app.route("/")

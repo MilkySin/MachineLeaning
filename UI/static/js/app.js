@@ -2,8 +2,8 @@
 Dropzone.autoDiscover = false;
 
 const myDropzone = new Dropzone("#dropzone", {
-    url: "/upload-handler",
-    paramName: "file",
+    url: "#", // Disable Dropzone’s built-in AJAX upload
+    autoProcessQueue: false,
     maxFilesize: 10, // MB
     acceptedFiles: "image/png, image/jpeg",
     maxFiles: 1,
@@ -11,11 +11,10 @@ const myDropzone = new Dropzone("#dropzone", {
     addRemoveLinks: true,
     dictRemoveFile: "Remove",
     dictInvalidFileType: "Only PNG and JPG images are allowed",
-    autoProcessQueue: false,
     init: function () {
         const uploadImageElement = document.getElementById("upload-image");
         const uploadTextImageElement = document.getElementById("upload-image-text");
-        const errorElement = document.getElementById("error"); // Get the error element
+        const errorElement = document.getElementById("error");
 
         this.on("addedfile", function (file) {
             if (this.files.length === 1) {
@@ -30,14 +29,6 @@ const myDropzone = new Dropzone("#dropzone", {
                 uploadTextImageElement.style.display = "block";
                 errorElement.style.display = "none";
             }
-        });
-
-        this.on("success", function (file, response) {
-            console.log("File uploaded successfully");
-        });
-
-        this.on("error", function (file, errorMessage) {
-            console.error(errorMessage);
         });
     },
 });
@@ -81,58 +72,66 @@ function clearTable() {
 // Add event listener to the Classify button
 document.getElementById("submitBtn").addEventListener("click", function () {
     const errorElement = document.getElementById("error");
+    const classTable = document.getElementById("classTable");
     errorElement.style.display = "none";
 
-    if (myDropzone.getAcceptedFiles().length === 0) {
+    const files = myDropzone.getAcceptedFiles();
+    if (files.length === 0) {
         errorElement.textContent = "Please upload an image before classifying.";
         errorElement.style.display = "block";
         return;
     }
-    errorElement.textContent = "Classifying image...";
+
+    const file = files[0];
+
+    // Step 1: Upload the image to the server
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+
+    errorElement.textContent = "Uploading image...";
     errorElement.style.display = "block";
-    myDropzone.processQueue();
-});
 
-myDropzone.on("success", function (file, response) {
-    const errorElement = document.getElementById("error");
-    const classTable = document.getElementById("classTable");
-
-    // Now trigger classification
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("mode", currentMode);
-
-    fetch("/classify_image", {
+    fetch("/upload-handler", {
         method: "POST",
-        body: formData,
+        body: uploadData,
     })
+        .then((res) => res.json())
+        .then((uploadResponse) => {
+            if (!uploadResponse.success) {
+                throw new Error(uploadResponse.error || "Upload failed");
+            }
+
+            // Step 2: Classify the image
+            const classifyData = new FormData();
+            classifyData.append("file", file);
+            classifyData.append("mode", currentMode);
+
+            errorElement.textContent = "Classifying image...";
+
+            return fetch("/classify_image", {
+                method: "POST",
+                body: classifyData,
+            });
+        })
         .then((res) => res.json())
         .then((data) => {
             if (data.error) {
-                errorElement.textContent = data.error;
-                errorElement.style.display = "block";
-                classTable.style.display = "none";
-                return;
+                throw new Error(data.error);
             }
 
+            // Update UI
             if (currentMode === "disease") {
                 document.getElementById("label_1").textContent = data.predictions.vgg.label;
                 document.getElementById("confidence_1").textContent = data.predictions.vgg.confidence;
-
                 document.getElementById("label_2").textContent = data.predictions.mobile_net.label;
                 document.getElementById("confidence_2").textContent = data.predictions.mobile_net.confidence;
-
                 document.getElementById("label_3").textContent = data.predictions.cnn.label;
                 document.getElementById("confidence_3").textContent = data.predictions.cnn.confidence;
-            }
-
-            if (currentMode === "variety") {
+            } else if (currentMode === "variety") {
                 document.getElementById("label_1").textContent = data.predictions.cnn.label;
                 document.getElementById("confidence_1").textContent = data.predictions.cnn.confidence;
-
                 document.getElementById("label_2").textContent = data.predictions.resnet50.label;
                 document.getElementById("confidence_2").textContent = data.predictions.resnet50.confidence;
-
                 document.getElementById("label_3").textContent = data.predictions.efficient_net.label;
                 document.getElementById("confidence_3").textContent = data.predictions.efficient_net.confidence;
             }
@@ -147,7 +146,7 @@ myDropzone.on("success", function (file, response) {
             classTable.style.display = "table";
         })
         .catch((err) => {
-            errorElement.textContent = "Classification failed: " + err;
+            errorElement.textContent = "Error: " + err.message;
             errorElement.style.display = "block";
             classTable.style.display = "none";
         });
